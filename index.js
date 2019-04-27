@@ -1,130 +1,227 @@
 var express = require('express');
 var app = express();
-var request = require('request');
 var Podio = require('podio-js').api;
 var domain = require('domain');
+var https = require('https')
+var podio;
+const port = process.env.PORT || 3000
 
-var podio = new Podio({
-    authType: 'password',
-    clientId: 'voluntariosdsf',
-    clientSecret: 'fUvYAYWXgitvE0y02txILmNR7I0pR6fr1Spjus7xWIDUeYjDgHTq7dDizcfTtTyj'
+app.get('/login', function (req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
+    authVoluntario(req.query.id)
+    .then(d => {
+        var itemId;
+        try {
+            itemId =  d[0].item.app_item_id   
+        } catch (error) {
+            res.json({ error: 'Usuario no válido' });
+            return;
+        }
+
+        if (itemId == req.query.pass) {
+            res.json({ hash: req.query.id })
+        } else {
+            res.json({ error: 'Contraseña no válida' })
+        }
+    }).catch(error => {
+        res.json({ error: 'Error del Servidor' })
+    })
+})
+
+app.get('/casos', function (req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
+    getCasos(req.query.token).then(
+        data => {
+            res.json(data);
+        }
+    );
 });
-var username = 'huascarm@gmail.com';
-var password = 'Pompeyista1982?';
 
-podio.isAuthenticated().then(function () {
-    // ready to make API calls
-    console.log('AUTH CORRECTA');
-}).catch(function (err) {
+app.get('/download', function (req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
+    download2(req.query.id).then(
+        data => {
+            res.send(data);
+        }
+    );
+});
 
-    var reqdomain = domain.create();
+app.listen(port, () => {
+    console.log(`Server running at port ` + port);
+});
 
-    reqdomain.on('error', function (e) {
-        console.log('Error:', e.name);
-        console.log('Error description:', e.message.error_description);
-        console.log('HTTP status:', e.status);
-        console.log('Requested URL:', e.url);
+function getCasos(ci) {
+    return new Promise((resolver, rechazar) => {
+        
+        podio= new Podio({
+            authType: 'password',
+            clientId: 'voluntariosdsf',
+            clientSecret: 'fUvYAYWXgitvE0y02txILmNR7I0pR6fr1Spjus7xWIDUeYjDgHTq7dDizcfTtTyj'
+        });
+        var username = 'huascarm@gmail.com';
+        var password = 'Pompeyista1982?';
 
-        console.log('error', { description: e.message });
-    });
+        podio.isAuthenticated().then(function () {
+            // ready to make API calls
+            console.log('AUTH CORRECTA 1');
+        }).catch(function (err) {
 
-    reqdomain.run(function () {
-        podio.authenticateWithCredentialsForOffering(username, password, null, function () {
-            
-            //features ();
-            
-            podio.request('POST', '/search/app/22569419/',{
-                query:'304640601',
-                ref_type:"item"
-            })
-            .then(function (data) {
-                podio.request('GET', `/item/${data[0].item.item_id}/reference/`)
-                .then(function (data2) {
-                    console.log(data2);
-                }).catch(function (err) {
-                    console.log('Error al GET', err)
-                });
-            }).catch(function (err) {
-                console.log('Error al GET', err)
+            var reqdomain = domain.create();
+
+            reqdomain.on('error', function (e) {
+                rechazar(e)
             });
 
-            console.log('AUTH CORRECTA 2');
-        });
-    });
-});
+            reqdomain.run(function () {
+                podio.authenticateWithCredentialsForOffering(username, password, null, function () {
 
-function features (){
-    podio.request('GET', '/app/22569419')
-    .then(function (data) {
-        console.log('HUASCAR APP DATA: ',data);
-    }).catch(function (err) {
-        console.log('Error al GET', err)
-    });
+                    //features ();
+
+                    podio.request('POST', '/search/app/22569419/', {
+                        query: ci.toString(),
+                        ref_type: "item"
+                    })
+                        .then(function (data) {
+                            podio.request('GET', `/item/${data[0].item.item_id}/reference/`)
+                                .then(function (data2) {
+                                    try {
+                                        var casos = data2.map(e =>{
+                                            return podio.request('GET', `/item/${e.items[0].item_id}`)
+                                            .then( r => {
+                                                var obj = {}
+                                                obj.type = r.app.name;
+                                                obj.id = r.item_id
+                                                obj.status = r.status
+                                                obj.titulo = r.app_item_id_formatted
+                                                if(obj.type == 'MEP'){
+                                                    obj.documentos = r.files
+                                                    obj.especifique = r.fields[10].values[0].value
+                                                    obj.cliente = r.fields[14].values[0].value
+                                                }else if(obj.type == 'CCSS'){
+                                                    obj.documentos = r.files
+                                                    obj.especifique = r.fields[9].values[0].value.text
+                                                    obj.cliente = r.fields[15].values[0].value
+                                                }
+                                                
+                                                return obj
+                                            })
+                                        })
+
+                                        Promise.all(casos).then(
+                                            res => {
+                                                resolver(res)}
+                                        )
+                                    } catch (error) {
+                                        rechazar(error);
+                                    }
+                                    
+                                }).catch(function (err) {
+                                    rechazar(err);
+                                });
+                        }).catch(function (err) {
+                            rechazar(err);
+                        });
+                });
+            });
+        });
+    })
 }
 
+function authVoluntario(ci) {
+    return new Promise((resolver, rechazar) => {
+        podio= new Podio({
+            authType: 'password',
+            clientId: 'voluntariosdsf',
+            clientSecret: 'fUvYAYWXgitvE0y02txILmNR7I0pR6fr1Spjus7xWIDUeYjDgHTq7dDizcfTtTyj'
+        });
+        var username = 'huascarm@gmail.com';
+        var password = 'Pompeyista1982?';
 
+        podio.isAuthenticated().then(function () {
+            voluntario(ci).then( d => {
+                resolver(d)
+            }).catch(e => rechazar(e))
+        }).catch(function (err) {
 
+            var reqdomain = domain.create();
 
+            reqdomain.on('error', function (e) {
+                rechazar(e)
+            });
 
+            reqdomain.run(function () {
+                podio.authenticateWithCredentialsForOffering(username, password, null, function () {
+                    voluntario(ci).then( d => {
+                        resolver(d)
+                    }).catch(e => rechazar(e))
+                });
+            });
+        });
+    })
 
+}
 
+function voluntario(ci) {
+    return new Promise((res, rej) => {
+        podio.request('POST', '/search/app/22569419/', {
+            query: ci.toString(),
+            ref_type: "item"
+        })
+        .then(function (data) {
+            try {
+                res(data)
+            } catch (error) {
+                rej(error)
+            }
+        }).catch(err => {
+            rej(err)
+        });
+    })
+}
+
+function features() {
+    podio.request('GET', '/app/22569419')
+        .then(function (data) {
+            console.log('HUASCAR APP DATA: ', data);
+        }).catch(function (err) {
+            console.log('Error al GET', err)
+        });
+}
+
+function download2(id){
+    return new Promise((resolver, rechazar) => {
+        podio= new Podio({
+            authType: 'password',
+            clientId: 'voluntariosdsf',
+            clientSecret: 'fUvYAYWXgitvE0y02txILmNR7I0pR6fr1Spjus7xWIDUeYjDgHTq7dDizcfTtTyj'
+        });
+        var username = 'huascarm@gmail.com';
+        var password = 'Pompeyista1982?';
+
+        podio.isAuthenticated().then(function () {
+            
+        }).catch(function (err) {
+
+            var reqdomain = domain.create();
+
+            reqdomain.on('error', function (e) {
+                rechazar(e)
+            });
+
+            reqdomain.run(function () {
+                podio.authenticateWithCredentialsForOffering(username, password, null, function () {
+                    var url = 'https://files.podio.com/'+id+'?oauth_token='+podio.authObject.accessToken;
+                    const request = require('request');
+                    request(url, { json: true }, (err, res) => {
+                        if (err) { rechazar(err) }
+                        resolver(res);
+                    });
+                });
+            });
+        });
+    })
+}
 
 /*
-
-"filters": { 177178684: '10869072' }
-voluntario=188367173
-
 un voluntario en particular: 304640601
-
-
-
-
-
-
-
-
-
-
-/**   platform.isAuthenticated().then(function () {
-    console.log('AUT CORRECTA')
-  }).catch(function (err) {
-    console.log(err)
-  })
-
-
-  if (platform.isAuthenticated()) {
-    platform.request('GET', '/tasks').then(function(data, err) {
-        console.log('SUC',data);
-        console.log('ERR',err);
-     }).catch(function (err) {
-        console.log('Error al GET',err)
-      });
-  } else {
-    platform.authenticateWithCredentials(username, password, function() {
-        platform.request('GET', '/app/22723503').then(function(data, err) {
-            console.log('SUC',data);
-            console.log('ERR',err);
-         });
-    });
-  }
-
-request.post(
-    'https://podio.com/oauth/token',
-    {
-        json: {
-            client_id: "voluntariosdsf",
-            grant_type: "app",
-            app_id: "22723503",
-            app_token: "59a2fae27eab4d488086db9bdd1627ab",
-            redirect_uri: "https://voluntarios.criptoanalisis.org/dashboard",
-            client_secret: "fUvYAYWXgitvE0y02txILmNR7I0pR6fr1Spjus7xWIDUeYjDgHTq7dDizcfTtTyj"
-        }
-    },
-    function (error, response, body) {
-        console.log('response', response.statusCode);
-        console.log('error', error);
-
-        console.log(body);
-
-    }
-);*/
+*/
