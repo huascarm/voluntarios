@@ -12,6 +12,7 @@
     "domain": "0.0.1",
     "express": "^4.16.4",
     "podio-js": "^1.6.1",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
   }
 }
