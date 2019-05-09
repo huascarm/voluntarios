@@ -1,9 +1,9 @@
 import dbConnection from '../../config/mysqlConnection';
 const conn = dbConnection();
 module.exports = app => {
-    app.post('/user/:id', (req, res) => {
+    app.post('/user', (req, res) => {
         res.header("Access-Control-Allow-Origin", "*");
-        consulta( 'Select idOperator from users where id =', req.params.id)
+        consulta( 'Select idOperator from users where id =', req.query.iduser)
         .then(data => {
             return consulta( 'Select online from operators where id =', data[0].idOperator)
         }).then( data => {
@@ -27,21 +27,3 @@ function consulta( sql, id){
         });
     })
 }
-
-/**
- * 
-=============== on res.send 
-X-Powered-By →Express
-Content-Type →application/json; charset=utf-8
-Content-Length →161
-ETag →W/"a1-d3z3obFD73A8KXTWuxHqgyDxUzQ"
-Date →Thu, 09 May 2019 17:00:00 GMT
-Connection →keep-alive
-=============== con res.json
-X-Powered-By →Express
-Content-Type →application/json; charset=utf-8
-Content-Length →161
-ETag →W/"a1-d3z3obFD73A8KXTWuxHqgyDxUzQ"
-Date →Thu, 09 May 2019 17:01:45 GMT
-Connection →keep-alive
- */

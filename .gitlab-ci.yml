@@ -23,5 +23,8 @@ Sube Backend Produccion:
   script:
     - ssh-keyscan 3.18.252.76 >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
+    - pm2 stop npm
     - rsync -r -a -z -e ssh --delete --chmod=755 . gitlab@3.18.252.76:/home/gitlab/backendVoluntarios
     - ssh gitlab@3.18.252.76 'cd /home/gitlab/backendVoluntarios && npm install --silent'
+    - pm2 start npm
+    # pm2 start npm -- start
