@@ -1,7 +1,7 @@
 import dbConnection from '../../config/mysqlConnection';
 const conn = dbConnection();
 module.exports = app => {
-    app.post('/operator/:id', (req, res) => {
+    app.post('/user/:id', (req, res) => {
         res.header("Access-Control-Allow-Origin", "*");
         consulta( 'Select idOperator from users where id =', req.params.id)
         .then(data => {
