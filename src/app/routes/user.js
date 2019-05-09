@@ -1,16 +1,18 @@
+const multer = require('multer');
+const upload = multer();
 import dbConnection from '../../config/mysqlConnection';
 const conn = dbConnection();
 module.exports = app => {
-    app.post('/user', (req, res) => {
+    app.post('/user', upload.none(), (req, res) => {
         res.header("Access-Control-Allow-Origin", "*");
-        if(req.query.iduser){
+        if(req.body.iduser){
             consulta( 'Select idOperator from users where id =', req.query.iduser)
             .then(data => {
                 return consulta( 'Select online from operators where id =', data[0].idOperator)
             }).then( data => {
                 res.json(data)
             }).catch( err => {
-                res.json({error : err})
+                res.json([{'online':0}])
             })
         }else{
             res.json({error : 'parametro no válido'})
