@@ -6,7 +6,7 @@ module.exports = app => {
     app.post('/user', upload.none(), (req, res) => {
         res.header("Access-Control-Allow-Origin", "*");
         if(req.body.iduser){
-            consulta( 'Select idOperator from users where id =', req.query.iduser)
+            consulta( 'Select idOperator from users where id =', req.body.iduser)
             .then(data => {
                 return consulta( 'Select online from operators where id =', data[0].idOperator)
             }).then( data => {
