@@ -3,14 +3,18 @@ const conn = dbConnection();
 module.exports = app => {
     app.post('/user', (req, res) => {
         res.header("Access-Control-Allow-Origin", "*");
-        consulta( 'Select idOperator from users where id =', req.query.iduser)
-        .then(data => {
-            return consulta( 'Select online from operators where id =', data[0].idOperator)
-        }).then( data => {
-            res.json(data)
-        }).catch( err => {
-            res.json({error : err})
-        })
+        if(req.query.iduser){
+            consulta( 'Select idOperator from users where id =', req.query.iduser)
+            .then(data => {
+                return consulta( 'Select online from operators where id =', data[0].idOperator)
+            }).then( data => {
+                res.json(data)
+            }).catch( err => {
+                res.json({error : err})
+            })
+        }else{
+            res.json({error : 'parametro no válido'})
+        }
     })
 }
 
