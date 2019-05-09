@@ -1,0 +1,27 @@
+variables:
+  DOCKER_DRIVER: overlay2
+image: instrumentisto/rsync-ssh
+
+.docker: &docker
+  tags:
+  - docker
+  
+before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+
+stages:
+  - deployprod
+
+Sube Backend Produccion:
+  <<: *docker
+  stage: deployprod
+  only:
+    - master
+  script:
+    - ssh-keyscan 3.18.252.76 >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - rsync -r -a -z -e ssh --delete --chmod=755 . gitlab@3.18.252.76:/home/gitlab/backendVoluntarios
+    - ssh gitlab@3.18.252.76 'cd /home/gitlab/backendVoluntarios && npm install --silent'
