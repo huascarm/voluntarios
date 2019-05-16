@@ -5,7 +5,27 @@ import app from './config/server';
 require('./app/routes/user')(app);
 require('./app/routes/podio')(app);
 
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
+io.set('transports', ['websocket']);
+io.on("connection", socket => {
+  console.log('user connected');
+
+  let previousId;
+  const safeJoin = currentId => {
+    socket.leave(previousId);
+    socket.join(currentId);
+    previousId = currentId;
+  };
+
+  let contador=0;
+  setInterval(() => {
+      socket.emit('caso', contador);
+      contador++;
+  }, 1000);
+})
 //inicio el server
-app.listen(app.get('port'), ()=>{
+http.listen(app.get('port'), ()=>{
     console.log('El server corre en el puerto: ', app.get('port'));
 })

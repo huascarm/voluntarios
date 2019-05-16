@@ -1,7 +1,6 @@
 import PodioConfig from '../../config/podioConfig'
 module.exports = app => {
     app.get('/login', function (req, res) {
-        res.header("Access-Control-Allow-Origin", "*");
         authVoluntario(req.query.id)
             .then(d => {
                 var itemId;
@@ -17,12 +16,12 @@ module.exports = app => {
                     res.json({ error: 'Contraseña no válida' })
                 }
             }).catch(error => {
+                console.log(error);
                 res.json({ error: 'Error del Servidor' })
             })
-    })
+    });
 
     app.get('/casos', function (req, res) {
-        res.header("Access-Control-Allow-Origin", "*");
         getCasos(req.query.token).then(
             data => {
                 res.json(data);
@@ -34,7 +33,6 @@ module.exports = app => {
     });
 
     app.get('/download', function (req, res) {
-        res.header("Access-Control-Allow-Origin", "*");
         download2(req.query.id).then(
             data => {
                 res.header("Access-Control-Allow-Origin", "*");
@@ -44,6 +42,7 @@ module.exports = app => {
             }
         );
     });
+
 }
 
 function authVoluntario(ci) {

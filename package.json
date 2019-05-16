@@ -9,15 +9,18 @@
   "author": "Huascar Miranda",
   "license": "ISC",
   "dependencies": {
+    "@types/socket.io": "^2.1.2",
     "babel-cli": "^6.0.0",
     "babel-preset-es2015": "^6.0.0",
     "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "domain": "0.0.1",
     "express": "^4.16.4",
     "multer": "^1.4.1",
     "mysql": "^2.17.1",
     "podio-js": "^1.6.1",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.7"
+    "request-promise-native": "^1.0.7",
+    "socket.io": "^2.2.0"
   }
 }
