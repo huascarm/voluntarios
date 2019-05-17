@@ -49,11 +49,11 @@ function consultaLibre(db, sql){
     return new Promise ((res, error) => {
         db.query( sql , (err, result) =>{
             if(err){
-                error(err);
+                error({code: 'Error de servidor: '+err.code})
             }else if(result.length>0){
                 res(result)
             }else{
-                error('Registro no encontrado')
+                error({code: 'Registro no encontrado'})
             }
         });
     })

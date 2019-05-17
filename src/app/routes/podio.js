@@ -43,6 +43,17 @@ module.exports = app => {
         );
     });
 
+    app.get('/lead', function (req, res) {
+        lead(req.query.item_id).then(
+            data => {
+                res.send(data);
+            }
+        ).catch(error => {
+            console.log(error);
+            res.json({ error: error })
+        })
+    });
+
 }
 
 function authVoluntario(ci) {
@@ -147,6 +158,81 @@ function download(){
     })
 }
 
-/*
-un voluntario en particular: 304640601
-*/
+function lead(id){
+    return new Promise((resolver, rechazar) => {
+        PodioConfig()
+        .then((podio) => {
+            podio
+            .request('GET', '/item/'+id)
+            .then(function(data) {
+                resolver(creaJson(data.fields))
+            }).catch((err) => {
+                rechazar(err);
+            })
+
+        }).catch((err) => {
+            rechazar(err);
+        })
+    })
+}
+function creaJson(data){
+    let result = {}
+    data.forEach(campo => {
+      switch(campo.external_id) {
+        case 'lead-contact':
+          result.nombre = campo.values[0].value;
+          break;
+        case 'apellido':
+          result.apellido1= campo.values[0].value;
+          break;
+        case 'apellido-2':
+          result.apellido2= campo.values[0].value;
+          break;
+        case 'sexo':
+          result.sexo= campo.values[0].value.id
+          break;
+        case 'estado-civil-2':
+          result.civil= campo.values[0].value.id
+          break;
+        case 'provincia-2':
+          result.provincia= campo.values[0].value.text
+          break;
+        case 'canton-1':
+          result.canton= campo.values[0].value.text
+          break;
+        case 'canton-4':
+          if(!result.canton){
+            result.canton= campo.values[0].value.text
+          }
+          break;
+        case 'direccion':
+          result.direccion= campo.values[0].value
+          break;
+        case 'ocupacion-2':
+          result.ocupacion= campo.values[0].value
+          break;
+        case 'celular-3':
+          result.celular= campo.values[0].value
+          break;
+        case 'telefono-de-casa':
+          result.tcasa= campo.values[0].value
+          break;
+        case 'telefono-del-trabajo-3':
+          result.ttrabajo= campo.values[0].value
+          break;
+        case 'celular-de-familiar-o-amigo':
+          result.cfamiliar1= campo.values[0].value
+          break;
+        case 'email-2':
+          result.email1= campo.values[0].value
+          break;
+        case 'email2':
+          if(!result.email1){
+          result.email1= campo.values[0].value
+          }
+          break;
+      }
+    });
+
+    return result;
+  }

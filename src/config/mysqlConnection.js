@@ -1,4 +1,4 @@
-import mysql from 'mysql';
+const mysql = require('mysql');
 
 module.exports = () => {
     return {
@@ -12,7 +12,7 @@ module.exports = () => {
             host: 'localhost',
             user: 'root',
             password: 'S4prissa',
-            database: 'leogomez_tse'
+            database: 'tse_test'
         })
     };
 }
