@@ -6,19 +6,21 @@ PodioConfig()
 	.then((podio) => {
 		podio
 			.request('GET', '/item/app/21822217',{
-                limit: 500,
+                limit: 3,
                 offset: 0
             })
 			.then(function(data) {
                 console.log(data.items.length, 'items encontrados');
                 let c=0;
                 data.items.forEach(element => {
-                  
-                    tse.query( `UPDATE ciudadanos SET podio=1, itemIdPodio=${element.item_id} WHERE cedula =${element.title}` , (err, result) =>{
+                  c++;
+                  const sql = `UPDATE ciudadanos SET podio=1, itemIdPodio=${element.item_id} WHERE cedula =${element.title}`;
+                  console.log(sql)  
+                  tse.query( sql , (err, result) =>{
                         if(err){
                             console.log(err);
                         }else{
-                            if(result.changedRows) c++;                           
+                            console.log(result)                           
                         }
                     });
                 });
